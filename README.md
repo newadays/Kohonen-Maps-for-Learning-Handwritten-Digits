@@ -1,5 +1,6 @@
 # Kohonen-Maps-for-Learning-Handwritten-Digits
 Kohonen Maps based on Self Organising Maps on article by Peter Leow
+Please upload the training data 1024 X 1934 Binary data with training Label 1 x 1024
 Copyright (c) 2015, 'Gbenga Awodokun All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
