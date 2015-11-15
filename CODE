@@ -1,0 +1,118 @@
+%%demonstrate the clustering of Handwritten Digits
+
+%%
+% Parameter settings
+clear all; close all; clc;
+load training_data;
+data = train_data;
+N=100;                                 %number of iterations
+[attrb,input]=size(data);              %training data
+sr=10;                                 %dimension of the space
+sc=10;                                 %dimension of the space
+som = zeros(sr,sc);                    %10x10 map of the neurons with the 1024 attributes (32 x 32 bits)
+edistances = zeros(sr,sc);             %euclidean distances of each neuron from the weights of winning neurons
+ndistances = zeros (sr,sc);            %euclidean distance of each neighbor neuron from the weights of the winning neurons
+testing_edistances = zeros(sr,sc);     %euclidean distances of each neuron from the weights of winning neurons-test
+weight_matrix = rand(1,1024,100);      %%Generating initial random weights
+%% Position Identifiers for the winning neurons
+k=1;
+for r=1:sr
+    for c=1:sc
+        som(r,c) = k; %10x10 map of the 100 neurons with the 1024 attributes
+        k=k+1;
+    end
+end
+%%
+% Self-Organising Phase
+r_max = 10;
+initial_sigma = 0.5 * r_max*sqrt(2);
+tau = N/log(initial_sigma);             %sigma zero
+initial_Learning_rate = 0.1;            %Initial Learning rate
+n =1;                                   %count
+while n<=N
+    for i=1:input                                                               %choose an input
+        %     i = randi(input);                                                 %randomly choose an input
+        Learning_rate = initial_Learning_rate * exp(-n/input);
+        % Prevent Learning_rate from falling below 0.01
+        if (Learning_rate  < 0.01)
+            Learning_rate  = 0.01;
+        end
+        
+        sigma(n) = initial_sigma * exp(-n/tau);
+        for p=1:numel(som)
+            %find the position of the particular neuron (x,y)
+            val=mod(p,10);
+            if (val==0)
+                c=10;
+                r=p/c;
+            else
+                c= mod(p,10);
+                r=((p-c)/10) + 1;
+            end
+            edistances(r,c) = norm(weight_matrix(:,:,p)- data(:,i)');            %find the euclidean distances
+        end
+        
+        win_neuron_val= min(min(edistances))   ;     %x,y coordinates of Winning neuron
+        
+        [wr,wc]=find(win_neuron_val==edistances) ;   %x,y coordinates of Winning neuron
+        
+        win_neuron = som(wr,wc)   ;                 %Number of Winning neuron
+        
+        for r=1:sr
+            for c=1:sc
+                dist=((r-wr)^2+(c-wc)^2);
+                hat(r,c) = exp (-dist)/(2*(sigma(n)^2));               %obtaining the norm distances ^(i,i*,t)
+            end
+        end
+        
+        
+        for p=1:numel(som)
+            %find the position of the particular neuron (x,y)
+            val=mod(p,10);
+            if (val==0)
+                c=10;
+                r=p/c;
+            else
+                c= mod(p,10);
+                r=((p-c)/10) + 1;
+            end
+            
+            for k=1:attrb
+                
+                % updating the weights
+                %     old_wt=reshape(wt(r,c,:),attrb,1);
+                
+                delta_wt = Learning_rate * hat(r,c) * (data(k,i)-weight_matrix(1,k,p));    %Updating the weights
+                weight_matrix(1,k,p) = weight_matrix(1,k,p) + delta_wt;
+            end
+        end
+        
+    end
+    
+%      %%%%%%% Draw updated SOM map %%%%%%%%%
+%     
+    f1 = figure(1);
+    set(f1,'name',strcat('Iteration #',num2str(n)),'numbertitle','off');
+for p=1:100
+        %find the position of the particular neuron (x,y)
+        val=mod(p,10);
+        if (val==0)
+            c=10;
+            r=p/c;
+        else
+            c= mod(p,10);
+            r=((p-c)/10) + 1;
+        end
+            region = 10 * (r - 1) + c;
+            subplot(sr,sc,region,'align')
+               weight_matrix_test=reshape(weight_matrix,1024,100);
+            img=reshape( weight_matrix_test(:,p),32,32)';
+            imshow(double(img));
+end
+%     
+%     %%%%%%% End of Draw updated SOM map %%%%%%%%%
+%     
+%     % Increase iteration count by one
+    n = n + 1;   
+end
+display('end of the training')
